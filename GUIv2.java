@@ -16,10 +16,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import blackjack.message.MessageFactory;
 
 
 
-public class MidtermGUI extends JFrame {
+
+public class GUIv2 extends JFrame {
 
 
 	private static final long serialVersionUID = 1L;
@@ -27,15 +29,17 @@ public class MidtermGUI extends JFrame {
 	JTextField field;
 	static JTextArea textArea;
 	String name;
+	static JTextArea playersCards;
+
 	
 	public static void main(String[] args) throws IOException 
 	{
-		new MidtermGUI();
+		new GUIv2();
 	}
 	
-	public MidtermGUI() throws IOException
+	public GUIv2() throws IOException
 	{
-		//137.190.250.174:8989
+		//52.35.72.251
 		
 		  InetAddress address;
 
@@ -44,7 +48,10 @@ public class MidtermGUI extends JFrame {
 	      
 			textArea = new JTextArea(15, 30);
 			textArea.setEditable(false);
-
+			
+			playersCards = new JTextArea(15, 30);
+			playersCards.setEditable(false);
+			
 	      JPanel myPanel = new JPanel();
 	      myPanel.add(new JLabel("Name"));
 	      myPanel.add(nameField);
@@ -61,7 +68,8 @@ public class MidtermGUI extends JFrame {
 	      
 			try {
 				address = InetAddress.getByName(ipField.getText());
-				ClientHandler ch = new ClientHandler(nameField.getText(), address);
+				ClientHandlerv2 ch = new ClientHandlerv2(nameField.getText(), address);
+				name = nameField.getText();
 				new Thread(ch).start();
 				
 			}
@@ -95,9 +103,13 @@ public class MidtermGUI extends JFrame {
 			new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scrollPane.setSize(100, 100);
 		
+		//ClientHandlerv2.playersToCards.keySet().toString();
+		
 		panel.add(scrollPane);
 		panel.add(messageArea);
 		panel.add(button);
+		panel.add(playersCards);
+		
 		
 		
 		
@@ -122,18 +134,47 @@ public class MidtermGUI extends JFrame {
 		messageArea.setText("");
 		
 		
-		 	ClientHandler.fromUser = text;
-		    if (ClientHandler.fromUser != null) 
+		 	ClientHandlerv2.fromUser = text;
+		 	
+		 	String[] cmdCheck = text.split(" ");
+		 	
+		 	try{
+			 	if (cmdCheck[0].equals("START"))
+			 		ClientHandlerv2.oos.writeObject(MessageFactory.getStartMessage());
+			 	else if (cmdCheck[0].equals("HIT"))
+			 		ClientHandlerv2.oos.writeObject(MessageFactory.getHitMessage());
+			 	else if (cmdCheck[0].equals("STAY"))
+			 		ClientHandlerv2.oos.writeObject(MessageFactory.getStayMessage());
+			 	else if (cmdCheck[0].equals("WIN"))
+			 		ClientHandlerv2.oos.writeObject(MessageFactory.getWinMessage(name));
+			 	else if (cmdCheck[0].equals("BUST"))
+			 		ClientHandlerv2.oos.writeObject(MessageFactory.getBustMessage());
+			 	else if (cmdCheck[0].equals("JOIN"))
+			 		ClientHandlerv2.oos.writeObject(MessageFactory.getJoinMessage());
+			 	else
+					ClientHandlerv2.oos.writeObject(MessageFactory.getChatMessage(text));
+			 	
+			 	ClientHandlerv2.oos.flush();
+
+
+		 	}
+		 	catch(Exception e)
+		 	{
+		 		e.printStackTrace();
+		 	}
+
+		 	/*
+		    if (ClientHandlerv2.fromUser != null) 
 		    {
 		        try
 		        {
-					ClientHandler.oos.writeObject(text);
 				} catch (IOException e) 
 		        {
 					e.printStackTrace();
 				}
 		    }
-		 }; 
+		    */
+		 }
 
 	}
 	
@@ -142,7 +183,6 @@ public class MidtermGUI extends JFrame {
 		
 	    private final HashSet<Character> pressed = new HashSet<Character>();
 
-		String text;
 		@Override
 		public void keyPressed(KeyEvent arg0) 
 		{
